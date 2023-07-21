@@ -1,10 +1,10 @@
-﻿using Newtonsoft.Json;
-using System.Net;
+﻿using ImageMagick;
 using IWshRuntimeLibrary;
-using static Create_Steam_Shortcuts.steam_API_JSON;
-using ImageMagick;
 using Microsoft.Win32;
+using Newtonsoft.Json;
+using System.Net;
 using System.Text.RegularExpressions;
+using static Create_Steam_Shortcuts.steam_API_JSON;
 
 namespace Create_Steam_Shortcuts
 {
@@ -28,7 +28,7 @@ namespace Create_Steam_Shortcuts
             {
                 string gameName = SanitizeFileName(game.name);
                 Console.WriteLine(gameName);
-                string icon = Path.Combine(iconFolder , $"{game.appid}.ico");
+                string icon = Path.Combine(iconFolder, $"{game.appid}.ico");
                 DownloadImage(game, icon);
                 AddShortcut($"steam://rungameid/{game.appid}", gameName, icon);
             });
@@ -57,7 +57,7 @@ namespace Create_Steam_Shortcuts
             }
             finally
             {
-                if(System.IO.File.Exists(image))
+                if (System.IO.File.Exists(image))
                 {
                     System.IO.File.Delete(image);
                 }
@@ -85,7 +85,7 @@ namespace Create_Steam_Shortcuts
                 {
                     string vdfLoc = Path.Combine(key.GetValue("InstallPath").ToString(), "steamapps", "libraryfolders.vdf");
                     key.Close();
-                    if(!System.IO.File.Exists(vdfLoc)) throw new Exception("Error locating steam library");
+                    if (!System.IO.File.Exists(vdfLoc)) throw new Exception("Error locating steam library");
 
                     List<string> list = listAppIDs(vdfLoc);
                     return list;
@@ -94,7 +94,7 @@ namespace Create_Steam_Shortcuts
             }
             catch
             {
-                RetryVDF:
+            RetryVDF:
                 Console.WriteLine("Error locating steam library.\nInput libraryfolders.vdf file location (ex. C:\\Program Files (x86)\\Steam\\steamapps\\libraryfolders.vdf).");
                 string vdfLoc = Console.ReadLine();
                 if (!System.IO.File.Exists(vdfLoc)) goto RetryVDF;
