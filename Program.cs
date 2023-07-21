@@ -10,17 +10,25 @@ namespace Create_Steam_Shortcuts
 {
     internal class Program
     {
+        static string programs_path = "";
+        static string shortcutFolder = "";
         static void Main(string[] args)
         {
             SteamResponse respon = GetGameData();
-            if (!Directory.Exists("tmp")) Directory.CreateDirectory("tmp");
+
+            programs_path = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+            shortcutFolder = Path.Combine(programs_path, @"SteamAppShortcuts");
+            Directory.Delete(shortcutFolder, true);
+            Directory.CreateDirectory(shortcutFolder);
+            string iconFolder = Path.Combine(shortcutFolder, $"icon");
+            Directory.CreateDirectory(iconFolder);
 
             Console.WriteLine($"==========\nApp Name\n==========");
             Parallel.ForEach(respon.apps, (game) =>
             {
                 string gameName = SanitizeFileName(game.name);
                 Console.WriteLine(gameName);
-                string icon = $"tmp\\{game.appid}.ico";
+                string icon = Path.Combine(iconFolder , $"{game.appid}.ico");
                 DownloadImage(game, icon);
                 AddShortcut($"steam://rungameid/{game.appid}", gameName, icon);
             });
@@ -32,7 +40,7 @@ namespace Create_Steam_Shortcuts
         {
             string imgHash = game.icon;
             string imageURL = $"https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/{game.appid}/{imgHash}.jpg";
-            string image = $"tmp\\{game.appid}.jpg";
+            string image = $"{game.appid}.jpg";
 
             try
             {
@@ -43,9 +51,16 @@ namespace Create_Steam_Shortcuts
                     ConvertImageToIcon(image, destination);
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Error downloading icon");
+            }
+            finally
+            {
+                if(System.IO.File.Exists(image))
+                {
+                    System.IO.File.Delete(image);
+                }
             }
         }
 
@@ -114,12 +129,7 @@ namespace Create_Steam_Shortcuts
 
         private static void AddShortcut(string pathTo, string shortcutName, string icon)
         {
-            string programs_path = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
-            string shortcutFolder = Path.Combine(programs_path, @"SteamAppShortcuts");
-            if (!Directory.Exists(shortcutFolder))
-            {
-                Directory.CreateDirectory(shortcutFolder);
-            }
+
             WshShell shell = new WshShell();
             string settingsLink = Path.Combine(shortcutFolder, shortcutName);
             IWshShortcut shortcut = (IWshShortcut)shell.CreateShortcut(settingsLink + ".lnk");
@@ -154,7 +164,7 @@ namespace Create_Steam_Shortcuts
         {
             using (MagickImage image = new MagickImage(imagePath))
             {
-                image.Resize(256, 256); // Adjust the dimensions as needed for the icon size (e.g., 256x256)
+                image.Resize(256, 256);
                 image.Format = MagickFormat.Icon;
                 image.Write(iconPath);
             }
